@@ -9,8 +9,8 @@
 // files' metadata (read), and undo of the token's own changes. Writes are the everyday ones a
 // Shortcut or a script makes (add, edit, move, mark seen, a lifecycle, a place, a reading);
 // nothing that trashes, merges, converts, empties, reveals or claims is open to a token (D58,
-// D124: the same line the MCP tools hold). A token reads only its own locations whatever the route says: RLS
-// intersects them on every call (0070).
+// D124: the same line the MCP tools hold). A token reads only its own locations whatever the
+// route says: RLS intersects them on every call (0070).
 
 export type TokenAccess = 'none' | 'read' | 'write';
 

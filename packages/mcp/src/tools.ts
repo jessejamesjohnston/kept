@@ -789,12 +789,13 @@ export const TOOL_DEFS = Object.freeze({
   // 1.x: a thing's lifecycle, as the thing page's Change lifecycle sheet and Archive set it
   // (POST /things/:id/lifecycle). Sold, given away, lost or put away, the thing keeps its record
   // and history and stays out of the Trash; the change is undoable for 7 days, and `in_use` brings
-  // it back. MCP only, like Moving mode: the assistant's card has no rows for it yet.
+  // it back. Like the sheet, a call sends the whole end: an ended detail left out is cleared.
+  // MCP only, like Moving mode: the assistant's card has no rows for it yet.
   retire_thing: tool({
     name: 'retire_thing',
     title: 'Sold, given away or put away',
     description:
-      'A thing is no longer in use: sold, given away, lost, thrown out or put away (archived). Kept keeps its record; `in_use` brings it back.',
+      'A thing is no longer in use: sold, given away, lost, thrown out or put away (archived). Kept keeps its record; `in_use` brings it back. Send the whole end: a detail left out is cleared.',
     scope: 'write',
     module: null,
     since: '1.x',

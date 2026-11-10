@@ -197,6 +197,46 @@ describe('retire_thing', () => {
     expect(await row(kettle.id)).toMatchObject({ lifecycle: 'lost' });
   });
 
+  it('names its own field in a refusal: ended_price.currency, not the route’s body.endedCurrency', async () => {
+    const tv = await createThing(t, ibrahim, home, { name: 'Television' });
+    const env = await tool(ctx(louis), 'retire_thing', {
+      location_id: home.id,
+      thing_id: tv.id,
+      lifecycle: 'sold',
+      ended_price: { amount: '80', currency: 'ZZZ' },
+    });
+    expect(env).toMatchObject({ error: 'validation' });
+    const hint = (env as { hint: string }).hint;
+    expect(hint).toMatch(/ended_price\.currency/);
+    expect(hint).not.toMatch(/endedCurrency|body\./);
+    expect(await row(tv.id)).toMatchObject({ lifecycle: 'in_use' });
+  });
+
+  it('replaces the ended details it is sent: one left out is cleared, as the route does', async () => {
+    const bench = await createThing(t, ibrahim, home, { name: 'Bench' });
+    await data(louis, 'retire_thing', {
+      location_id: home.id,
+      thing_id: bench.id,
+      lifecycle: 'given_away',
+      ended_on: '2026-09-01',
+      ended_to: 'Murdock',
+      ended_notes: 'Picked up',
+    });
+    await data(louis, 'retire_thing', {
+      location_id: home.id,
+      thing_id: bench.id,
+      lifecycle: 'given_away',
+      ended_on: '2026-09-02',
+    });
+    expect(await row(bench.id)).toMatchObject({
+      lifecycle: 'given_away',
+      ended_on: '2026-09-02',
+      ended_to: null,
+      ended_notes: null,
+    });
+    expect(TOOL_DEFS.retire_thing.description).toMatch(/left out is cleared/);
+  });
+
   it('refuses a viewer and a read principal, and writes nothing', async () => {
     const drill = await createThing(t, ibrahim, home, { name: 'Drill' });
     const viewer = await runTool(ctx(talia), 'retire_thing', {

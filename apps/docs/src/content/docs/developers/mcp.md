@@ -86,9 +86,10 @@ SQL** (D58, D63, D124). `packages/mcp/src/tools.test.ts` walks the names and fai
 does. `retire_thing` changes a thing's lifecycle (sold, given away, lost, thrown out, archived, or
 back in use) through `setLifecycle()` in `apps/server/src/things/service.ts`, the operation behind
 `POST /things/:id/lifecycle`: the thing keeps its record and history, stays out of the Trash, and
-the `thing.lifecycle` event is undoable for 7 days. An ended price follows the money gate. The
-route itself is open to a write token too. A tool that needs a file, such as a receipt, returns a short link from `attach_link` that
-opens the capture sheet in the web app.
+the `thing.lifecycle` event is undoable for 7 days. Like the route, a call replaces the ended
+details: one left out is cleared. An ended price follows the money gate. The route itself is open
+to a write token too. A tool that needs a file, such as a receipt, returns a short link from
+`attach_link` that opens the capture sheet in the web app.
 
 A tool is offered only in locations where its module is on and, for a write tool, where the
 principal may write. `capabilities` lists what each location allows. Roles are checked on every
