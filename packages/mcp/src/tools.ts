@@ -10,8 +10,8 @@
  *   after the plan (Moving mode's, D251). The contract lands now; the handler lands with that
  *   step, and `capabilities` never lists a tool without one.
  * - `doors`: who is offered the tool, MCP and the assistant (D22) unless it says otherwise. The
- *   moving tools are MCP's only: the assistant's confirmation card has no rows for them (D124's
- *   amendment). The assistant offers each step the tools its question is about
+ *   moving tools and `retire_thing` are MCP's only: the assistant's confirmation card has no rows
+ *   for them (D124's amendment). The assistant offers each step the tools its question is about
  *   (apps/server/src/assistant/select.ts).
  * - `input` is what the model or the MCP client sends (snake_case). Ids are UUIDs or
  *   6-character short IDs (`idOrCode`), read through `normaliseInputCode`. `location_id` is
@@ -22,7 +22,8 @@
  *   never shows them.
  *
  * No tool trashes, deletes, merges, transfers ownership, reveals a secret, uploads a file or runs
- * SQL (D58, D63, D124); `tools.test.ts` walks the names.
+ * SQL (D58, D63, D124); `tools.test.ts` walks the names. A lifecycle change (`retire_thing`) is
+ * none of those: the thing and its history stay, and its Undo puts it back.
  */
 
 import {
@@ -784,6 +785,35 @@ export const TOOL_DEFS = Object.freeze({
       quantity: z.number().int().min(1).optional(),
     }),
     output: writeResult.extend({ thing: thingRef, split_from: uuid.optional() }),
+  }),
+  // 1.x: a thing's lifecycle, as the thing page's Change lifecycle sheet and Archive set it
+  // (POST /things/:id/lifecycle). Sold, given away, lost or put away, the thing keeps its record
+  // and history and stays out of the Trash; the change is undoable for 7 days, and `in_use` brings
+  // it back. MCP only, like Moving mode: the assistant's card has no rows for it yet.
+  retire_thing: tool({
+    name: 'retire_thing',
+    title: 'Sold, given away or put away',
+    description:
+      'A thing is no longer in use: sold, given away, lost, thrown out or put away (archived). Kept keeps its record; `in_use` brings it back.',
+    scope: 'write',
+    module: null,
+    since: '1.x',
+    doors: ['mcp'],
+    idempotent: true,
+    input: z.object({
+      location_id: locationId,
+      thing_id: idOrCode,
+      lifecycle: z
+        .enum(LIFECYCLES)
+        .describe(
+          '`archived`: still yours, put away. `disposed`: thrown out or recycled. `in_use`: back in use, which clears the ended details',
+        ),
+      ended_on: isoDate.optional().describe('When it ended'),
+      ended_to: shortText(200).optional().describe('Who it went to (sold, given away, returned)'),
+      ended_notes: shortText(5000).optional(),
+      ended_price: money.optional().describe('What it sold for, where money is shown'),
+    }),
+    output: writeResult.extend({ thing: thingRef, lifecycle: z.enum(LIFECYCLES) }),
   }),
   mark_seen: tool({
     name: 'mark_seen',

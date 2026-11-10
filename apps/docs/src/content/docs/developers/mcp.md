@@ -43,6 +43,7 @@ User-written strings in outputs sit under an `untrusted` key. Lists default to 2
 | `update_thing` | write | core |
 | `move_thing` | write | core |
 | `mark_seen` | write | core |
+| `retire_thing` | write | core (MCP only) |
 | `create_place` | write | core |
 | `update_place`, `turn_into_boxes` | write | core |
 | `attach_link` | write | core |
@@ -82,7 +83,11 @@ single conversion has no Undo.
 
 **No tool trashes, deletes, merges, transfers ownership, reveals a secret, uploads a file or runs
 SQL** (D58, D63, D124). `packages/mcp/src/tools.test.ts` walks the names and fails on one that
-does. A tool that needs a file, such as a receipt, returns a short link from `attach_link` that
+does. `retire_thing` changes a thing's lifecycle (sold, given away, lost, thrown out, archived, or
+back in use) through `setLifecycle()` in `apps/server/src/things/service.ts`, the operation behind
+`POST /things/:id/lifecycle`: the thing keeps its record and history, stays out of the Trash, and
+the `thing.lifecycle` event is undoable for 7 days. An ended price follows the money gate. The
+route itself is open to a write token too. A tool that needs a file, such as a receipt, returns a short link from `attach_link` that
 opens the capture sheet in the web app.
 
 A tool is offered only in locations where its module is on and, for a write tool, where the
@@ -90,7 +95,8 @@ principal may write. `capabilities` lists what each location allows. Roles are c
 call, never cached in a token (D180).
 
 A tool's `doors` say who is offered it: MCP and the in-app assistant, unless it names fewer. The
-Moving mode tools (D251) are MCP's only; `runTool()` answers `tool_unavailable` at the other door.
+Moving mode tools (D251) and `retire_thing` are MCP's only; `runTool()` answers `tool_unavailable`
+at the other door.
 They call `moving/service.ts`, the routes' own functions: packing is the ordinary move into the
 box's container, and a box's state change and an unpack are undoable for 7 days, as in the web.
 

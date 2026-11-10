@@ -41,6 +41,7 @@ import {
   logReading,
   markSeenTool,
   moveThing,
+  retireThingTool,
   updateThingTool,
 } from './handlers/write.js';
 import type { Handler, HandlerTable } from './types.js';
@@ -64,6 +65,8 @@ const HANDLERS: HandlerTable = {
   update_thing: updateThingTool,
   move_thing: moveThing,
   mark_seen: markSeenTool,
+  // 1.x: a thing's lifecycle (sold, given away, put away, back in use), MCP only.
+  retire_thing: retireThingTool,
   create_place: createPlaceTool,
   // 1.x (#313): the place form and Turn places into boxes.
   update_place: updatePlaceTool,
