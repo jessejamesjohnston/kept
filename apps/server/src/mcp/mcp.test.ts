@@ -232,6 +232,29 @@ describe('/mcp', () => {
     expect(live).toEqual({ lifecycle: 'given_away', deleted_at: null });
   });
 
+  it('keeps retire_thing in the token’s locations, though its creator reaches more', async () => {
+    // Ibrahim owns Home and Office (both with MCP on); his token holds Home only.
+    const client = await connect((await token(ibrahim, 'write', [home.id])).secret);
+    const chair = await createThing(t, ibrahim, office, { name: 'Desk chair' });
+    const res = await client.callTool({
+      name: 'retire_thing',
+      arguments: { location_id: office.id, thing_id: chair.id, lifecycle: 'disposed' },
+    });
+    expect(res.isError).toBe(true);
+    const bare = await client.callTool({
+      name: 'retire_thing',
+      arguments: { thing_id: chair.id, lifecycle: 'disposed' },
+    });
+    expect(bare.isError).toBe(true);
+    expect(answer(bare)).toMatchObject({ error: 'not_found' });
+    const [live] = await own<{ lifecycle: string }>(
+      db,
+      'SELECT lifecycle FROM public.things WHERE id = $1',
+      [chair.id],
+    );
+    expect(live?.lifecycle).toBe('in_use');
+  });
+
   it('refuses a token per call once its creator loses the role, in Kept’s words', async () => {
     const peter = await person(t, db, 'louis-two');
     const membership = await join(db, home.id, peter.userId, 'member');
